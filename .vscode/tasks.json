@@ -7,7 +7,7 @@
             "command": "C:\\sgdk141\\bin\\make",
             "args": [
                 "-f",
-                "${env:GDK_WIN}\\makefile.gen"
+                "${env:GDK_WIN}\\makefile.gen",
             ],
             "group": {
                 "kind": "build",

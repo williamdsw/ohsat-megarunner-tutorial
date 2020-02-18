@@ -1,5 +1,6 @@
 #include <genesis.h>
 #include <string.h>
+#include "../res/resources.h"
 
 //------------------------------------------------------------------//
 // FIELDS
@@ -72,7 +73,27 @@ int main ()
     JOY_init ();
     JOY_setEventHandler (&joystickHandler);
 
+    // Define o tamanho do plano dos tiles
+    VDP_setPlanSize (32, 32);
+
+    // Carrega tiles
+    VDP_loadTileSet (floorImage.tileset, 1, DMA);
+    VDP_loadTileSet (wallImage.tileset, 2, DMA);
+    VDP_loadTileSet (lightPoleImage.tileset, 3, DMA);
+
+    VDP_setPalette (PAL1, lightPoleImage.palette -> data);
+
+    // Define paleta de cores do background baseado numa cor de valor hexadecimal
+    VDP_setPaletteColor (0, RGB24_TO_VDPCOLOR (0x6dc2ca));
+
     showText (MESSAGE_START);
+
+    // Adiciona linha de tiles
+    VDP_fillTileMapRect (PLAN_B, TILE_ATTR_FULL (PAL1, 0, FALSE, FALSE, 1), 0, 16, 32, 1);
+    VDP_fillTileMapRect (PLAN_B, TILE_ATTR_FULL (PAL1, 0, FALSE, TRUE, 2), 0, 17, 32, 14);
+
+    // Parecido com fillTileMapRect, mas calcula quantos tiles serao necessarios
+    VDP_fillTileMapRectInc (PLAN_B, TILE_ATTR_FULL (PAL1, 0, FALSE, FALSE, 3), 15, 13, 2, 3);
 
     // Loop do jogo
     while (1)
@@ -81,7 +102,7 @@ int main ()
         {
 
         }
-        
+
         VDP_waitVSync ();
     }
 
