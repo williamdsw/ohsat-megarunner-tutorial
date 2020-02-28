@@ -13,12 +13,16 @@ const char MESSAGE_START[22] = "Press START to Begin!";
 const char MESSAGE_RESET[22] = "Press START to Reset!";
 
 const int SCROLL_SPEED = 2;
+const int FLOOR_HEIGHT = 128;   // altura do chao
+fix16 gravity = FIX16 (0.2);
 
 // Player
 
 Sprite* player;
 const int PLAYER_POSITION_X = 32;
-int playerPositionY = 112;
+fix16 playerPositionY = FIX16 (112);      // fix16 e tipo para disfarcar floats
+fix16 playerVelocityY = FIX16 (0);
+int playerHeight = 16;
 
 // Obstacle
 
@@ -29,6 +33,7 @@ int obstacleVelocityX = 0;
 
 // State
 bool isGameOn = FALSE;
+bool isJumping = FALSE;
 
 //------------------------------------------------------------------//
 // HELPER FUNCTIONS
@@ -75,9 +80,15 @@ void joystickHandler (u16 joystick, u16 wasChanged, u16 wasPressed)
             }
         }
 
+        // Pulo
         if (wasPressed & BUTTON_C)
         {
-
+            if (isJumping == FALSE)
+            {
+                isJumping = TRUE;
+                playerVelocityY = FIX16 (-4);
+                SPR_setAnim (player, ANIMATION_JUMP);
+            }
         }
     }
 }
@@ -153,7 +164,27 @@ int main ()
                 obstaclePositionX = 320;
             }
 
+            // Aplica velocidade com resultado da soma
+            playerPositionY = fix16Add (playerPositionY, playerVelocityY);
+
+            // Aplica gravidade
+            if (isJumping == TRUE) 
+            {
+                playerVelocityY = fix16Add (playerVelocityY, gravity);
+            }
+
+            // Verifica se esta no chao
+            if (isJumping == TRUE && fix16ToInt (playerPositionY) + playerHeight >= (FLOOR_HEIGHT))
+            {
+                isJumping = FALSE;
+                playerVelocityY = FIX16 (0);
+                playerPositionY = intToFix16 (FLOOR_HEIGHT - playerHeight);
+                SPR_setAnim (player, ANIMATION_RUN);
+            }
+
+            // Atualiza posicoes dos objetos com base em x & y
             SPR_setPosition (obstacle, obstaclePositionX, 120);
+            SPR_setPosition (player, PLAYER_POSITION_X, fix16ToInt (playerPositionY));
         }
 
         VDP_waitVSync ();
