@@ -16,8 +16,12 @@ const int SCROLL_SPEED = 2;
 const int FLOOR_HEIGHT = 128;   // altura do chao
 fix16 gravity = FIX16 (0.2);
 
-// Player
+// Score
+int currentScore = 0;
+char labelScore[6] = "SCORE\0";
+char textScore[3] = "0";
 
+// Player
 Sprite* player;
 const int PLAYER_POSITION_X = 32;
 fix16 playerPositionY = FIX16 (112);      // fix16 e tipo para disfarcar floats
@@ -25,7 +29,6 @@ fix16 playerVelocityY = FIX16 (0);
 int playerHeight = 16;
 
 // Obstacle
-
 Sprite* obstacle;
 int obstaclePositionX = 320;
 int obstaclePositionY = 128;
@@ -34,6 +37,7 @@ int obstacleVelocityX = 0;
 // State
 bool isGameOn = FALSE;
 bool isJumping = FALSE;
+bool wasScoreAdded = FALSE;
 
 //------------------------------------------------------------------//
 // HELPER FUNCTIONS
@@ -49,6 +53,13 @@ void clearText ()
     VDP_clearText (0, 10, 32);
 }
 
+void updateScoreDisplay ()
+{
+    sprintf (textScore, "%d", currentScore);
+    VDP_clearText (1, 2, 3);
+    VDP_drawText (textScore, 10, 2);
+}
+
 void startGame ()
 {
     if (isGameOn == FALSE)
@@ -56,6 +67,11 @@ void startGame ()
         isGameOn = TRUE;
         clearText ();
     }
+
+    VDP_drawText (labelScore, 10, 1);
+    currentScore = 0;
+    updateScoreDisplay ();
+    obstaclePositionX = 320;
 }
 
 void endGame ()
@@ -143,16 +159,16 @@ int main ()
     // Loop do jogo
     while (1)
     {
-        // Realiza um scroll horizontal no Plano B com base no valor offset de distancia de frame para frame
-        VDP_setHorizontalScroll (PLAN_B, offset -= SCROLL_SPEED);
-
-        if (offset <= -256) 
-        {
-            offset = 0;
-        }
-
         if (isGameOn == TRUE)
         {
+            // Realiza um scroll horizontal no Plano B com base no valor offset de distancia de frame para frame
+            VDP_setHorizontalScroll (PLAN_B, offset -= SCROLL_SPEED);
+
+            if (offset <= -256) 
+            {
+                offset = 0;
+            }
+            
             // Atualiza o sprite a cada frame
             SPR_update ();
 
@@ -177,9 +193,28 @@ int main ()
             if (isJumping == TRUE && fix16ToInt (playerPositionY) + playerHeight >= (FLOOR_HEIGHT))
             {
                 isJumping = FALSE;
+                wasScoreAdded = FALSE;
                 playerVelocityY = FIX16 (0);
                 playerPositionY = intToFix16 (FLOOR_HEIGHT - playerHeight);
                 SPR_setAnim (player, ANIMATION_RUN);
+            }
+
+            // Verifica colisao com obstaculo
+            if (PLAYER_POSITION_X < (obstaclePositionX + 8) && (PLAYER_POSITION_X + 8) > obstaclePositionX)
+            {
+                if (isJumping == FALSE)
+                {
+                    endGame ();
+                }
+                else
+                {
+                    if (wasScoreAdded == FALSE)
+                    {
+                        currentScore++;
+                        updateScoreDisplay ();
+                        wasScoreAdded = TRUE;
+                    }
+                }
             }
 
             // Atualiza posicoes dos objetos com base em x & y
